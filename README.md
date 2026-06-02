@@ -31,6 +31,16 @@ cd siem_support_final
 setup_env.bat
 ```
 
+### 1b. One-click launcher from the SIEM root
+
+From the root `SIEM/` folder, run:
+
+```powershell
+launch_full_siem.bat
+```
+
+This root launcher will run `setup_env.bat` automatically if `.venv` does not exist, then launch the full pipeline and dashboard.
+
 ### 2. Configure source paths
 
 Copy `siem_support_final/config/sources.ini.example` to `siem_support_final/config/sources.ini` and update the paths for your machine.

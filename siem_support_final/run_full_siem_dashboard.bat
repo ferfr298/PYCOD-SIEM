@@ -31,6 +31,12 @@ if not exist ".venv\Scripts\activate.bat" (
 REM --- Activate virtual environment -------------------------------------------
 echo [Step 0] Activating virtual environment ...
 call .venv\Scripts\activate.bat
+set "VENV_PYTHON=.venv\Scripts\python.exe"
+if not exist "%VENV_PYTHON%" (
+    echo [ERROR] Virtual environment python not found: %VENV_PYTHON%
+    pause
+    exit /b 1
+)
 echo.
 
 REM --- Check for config file --------------------------------------------------
@@ -43,7 +49,7 @@ if not exist "config\sources.ini" (
 
 REM --- Step 1: Fetch new log lines --------------------------------------------
 echo [Step 1] Fetching new log lines ...
-python fetcher.py --config config\sources.ini
+"%VENV_PYTHON%" fetcher.py --config config\sources.ini
 if errorlevel 1 (
     echo.
     echo [ERROR] Fetcher failed. Check the output above.
@@ -54,7 +60,7 @@ echo.
 
 REM --- Step 2: Run ML pipeline ------------------------------------------------
 echo [Step 2] Running ML engine via runner.py --skip-fetch ...
-python runner.py --config config\sources.ini --skip-fetch
+"%VENV_PYTHON%" runner.py --config config\sources.ini --skip-fetch
 if errorlevel 1 (
     echo.
     echo [ERROR] ML run failed. Check the output above.
@@ -68,7 +74,7 @@ echo [Step 3] Starting Streamlit dashboard ...
 echo          Open http://localhost:8501 in your browser.
 echo          Press Ctrl+C in this window to stop the dashboard.
 echo.
-streamlit run dashboard.py
+"%VENV_PYTHON%" -m streamlit run dashboard.py
 
 echo.
 echo Dashboard stopped.
