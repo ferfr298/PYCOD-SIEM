@@ -1,0 +1,16 @@
+May 20 08:01:12 web01 sshd[1201]: Accepted password for alice from 192.168.1.10 port 54321 ssh2
+May 20 08:05:44 web01 sshd[1202]: Failed password for bob from 10.0.0.55 port 43210 ssh2
+May 20 09:12:33 web01 sshd[1203]: Accepted password for carol from 203.0.113.5 port 22345 ssh2
+May 20 02:47:01 web01 sshd[1204]: Failed password for root from 185.220.101.1 port 11111 ssh2
+May 20 02:47:02 web01 sshd[1205]: Failed password for root from 185.220.101.1 port 11112 ssh2
+May 20 02:47:03 web01 sshd[1206]: Failed password for root from 185.220.101.1 port 11113 ssh2
+May 20 10:30:00 web01 sshd[1207]: Accepted password for dave from 198.51.100.9 port 55555 ssh2
+May 20 23:58:59 web01 sshd[1208]: Accepted password for eve from 172.16.0.8 port 33333 ssh2
+May 20 08:01:12 web01 sshd[1201]: Accepted password for alice from 192.168.1.10 port 54321 ssh2
+May 20 08:05:44 web01 sshd[1202]: Failed password for bob from 10.0.0.55 port 43210 ssh2
+May 20 09:12:33 web01 sshd[1203]: Accepted password for carol from 203.0.113.5 port 22345 ssh2
+May 20 02:47:01 web01 sshd[1204]: Failed password for root from 185.220.101.1 port 11111 ssh2
+May 20 02:47:02 web01 sshd[1205]: Failed password for root from 185.220.101.1 port 11112 ssh2
+May 20 02:47:03 web01 sshd[1206]: Failed password for root from 185.220.101.1 port 11113 ssh2
+May 20 10:30:00 web01 sshd[1207]: Accepted password for dave from 198.51.100.9 port 55555 ssh2
+May 20 23:58:59 web01 sshd[1208]: Accepted password for eve from 172.16.0.8 port 33333 ssh2

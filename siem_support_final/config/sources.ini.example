@@ -1,0 +1,41 @@
+# =============================================================================
+#  SIEM Support — sources.ini.example
+#  Copy this file to sources.ini and edit the paths for your environment.
+#  Forward slashes work on Windows too; backslashes are also accepted.
+# =============================================================================
+
+[ml]
+# Path to the SIEM_ML-main project root.
+# Use a path relative to this support project, e.g.:
+#   ../SIEM_ML-main
+# or an absolute path, e.g.:
+#   C:/Projects/SIEM_ML-main
+project_dir     = ../SIEM_ML-main
+
+# Sub-folders (relative to project_dir) — usually no need to change these.
+logs_dir        = logs
+reports_dir     = reports
+checkpoint_file = memory/fetcher_checkpoints.json
+
+
+# =============================================================================
+#  Option A — Directory-based log discovery (recommended)
+#  The fetcher will recursively scan each listed directory for *.log files
+#  and copy new lines into the ML logs/ folder, preserving filenames.
+#  Multiple directories: comma-separated or one per line.
+# =============================================================================
+
+[source_dirs]
+paths = ../sample_source_logs
+# paths = C:/Apps/MyApp/logs, D:/Server/logs
+
+
+# =============================================================================
+#  Option B — Exact source file paths (optional fallback)
+#  Use this section instead of (or in addition to) [source_dirs] when you
+#  want to list specific files rather than scan a whole directory.
+#  Remove or comment out [source_dirs] above if you use this exclusively.
+# =============================================================================
+
+# [source_files]
+# files = C:/var/log/syslog.log, C:/var/log/auth.log

@@ -1,0 +1,15 @@
+# SIEM Support — Python dependencies
+# ====================================
+# fetcher.py and runner.py use only the Python standard library.
+# The packages below are for the dashboard and test suite only.
+#
+# Install alongside the ML project's requirements:
+#   pip install -r ../SIEM_ML-main/requirements.txt
+#   pip install -r requirements-support.txt
+
+# Dashboard
+streamlit>=1.35
+pandas>=2.2,<3.0
+
+# Tests
+pytest>=7.0

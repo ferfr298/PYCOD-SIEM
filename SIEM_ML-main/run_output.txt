@@ -1,0 +1,171 @@
+Loading logs from:
+- C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\logs\mixed_syslog_2000.log
+- C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\logs\normal_syslog_1000.log
+- C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\logs\ssh.log
+- C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\logs\syslog.log
+- C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\logs\web.log
+Creating features for ML...
+Retrain requested, so a new model will be created and saved.
+Saved model to: C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\memory\siem_anomaly_model.pkl
+
+PER-FILE PARSED COUNTS AND ANOMALY REPORT:
+
+
+RISK DISTRIBUTION (base country risk tiers):
+- base 0.20: 2970 row(s)
+- base 0.60: 0 row(s)
+- base 0.75: 0 row(s)
+- base 0.95: 53 row(s)
+
+RISK DISTRIBUTION (dynamic risk after behavior boost):
+- boosted 0.20: 104 row(s)
+- boosted 0.25: 371 row(s)
+- boosted 0.28: 357 row(s)
+- boosted 0.30: 13 row(s)
+- boosted 0.31: 220 row(s)
+- boosted 0.33: 45 row(s)
+- boosted 0.34: 343 row(s)
+- boosted 0.36: 70 row(s)
+- boosted 0.37: 301 row(s)
+- boosted 0.38: 20 row(s)
+- boosted 0.39: 196 row(s)
+- boosted 0.40: 243 row(s)
+- boosted 0.41: 31 row(s)
+- boosted 0.42: 159 row(s)
+- boosted 0.43: 72 row(s)
+- boosted 0.44: 48 row(s)
+- boosted 0.45: 132 row(s)
+- boosted 0.46: 20 row(s)
+- boosted 0.47: 19 row(s)
+- boosted 0.48: 107 row(s)
+- boosted 0.49: 12 row(s)
+- boosted 0.50: 9 row(s)
+- boosted 0.51: 43 row(s)
+- boosted 0.52: 10 row(s)
+- boosted 0.53: 2 row(s)
+- boosted 0.54: 6 row(s)
+- boosted 0.55: 11 row(s)
+- boosted 0.56: 1 row(s)
+- boosted 0.58: 4 row(s)
+- boosted 0.61: 1 row(s)
+- boosted 0.99: 53 row(s)
+
+CSV report written to: C:\Users\DEALE828\OneDrive - 365education\Documents\BTS CS\Pytwo\Program\SIEM_ML\reports\siem_report_20260512_092316.csv
+
+File: mixed_syslog_2000.log — parsed rows: 2000 — anomalies: 26
+  [ALERT] 2026-05-05 23:18:15 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.04
+
+  [ALERT] 2026-05-05 22:17:56 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.03
+
+  [ALERT] 2026-05-05 23:34:42 | User: root | Success: 0 | Failed last hour: 1 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 1 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.02
+
+  [ALERT] 2026-05-05 19:11:30 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.02
+
+  [ALERT] 2026-05-05 23:40:11 | User: root | Success: 0 | Failed last hour: 2 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 2 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.02
+
+  [ALERT] 2026-05-05 19:33:26 | User: system | Success: 0 | Failed last hour: 5 | Country: Local/Private | Country risk: 0.58 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 5 recent failed login(s) in last hour, Failed login, Very high login frequency, Dynamic risk boost applied (0.20 -> 0.58); Anomaly score = -0.02
+
+  [ALERT] 2026-05-05 00:32:54 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.01
+
+  [ALERT] 2026-05-06 00:51:28 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 08:29:57 | User: root | Success: 0 | Failed last hour: 4 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: 4 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 21:39:33 | User: admin | Success: 0 | Failed last hour: 6 | Country: Local/Private | Country risk: 0.56 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 6 recent failed login(s) in last hour, Failed login, Dynamic risk boost applied (0.20 -> 0.56); Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 12:25:44 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: High country risk (external IP), Failed login; Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 19:06:01 | User: system | Success: 0 | Failed last hour: 4 | Country: Local/Private | Country risk: 0.55 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 4 recent failed login(s) in last hour, Failed login, Very high login frequency, Dynamic risk boost applied (0.20 -> 0.55); Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 19:22:28 | User: system | Success: 0 | Failed last hour: 4 | Country: Local/Private | Country risk: 0.55 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 4 recent failed login(s) in last hour, Failed login, Very high login frequency, Dynamic risk boost applied (0.20 -> 0.55); Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 12:03:48 | User: system | Success: 0 | Failed last hour: 6 | Country: Local/Private | Country risk: 0.53 | Unusual hour: 0
+         Reason: 6 recent failed login(s) in last hour, Failed login, Very high login frequency, Dynamic risk boost applied (0.20 -> 0.53); Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 10:52:31 | User: root | Success: 0 | Failed last hour: 4 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: 4 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 20:55:41 | User: root | Success: 0 | Failed last hour: 1 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 1 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 18:11:11 | User: root | Success: 0 | Failed last hour: 1 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: 1 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 02:44:30 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 20:06:20 | User: root | Success: 0 | Failed last hour: 3 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 3 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 02:17:05 | User: system | Success: 0 | Failed last hour: 6 | Country: Local/Private | Country risk: 0.61 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 6 recent failed login(s) in last hour, Failed login, Very high login frequency, Dynamic risk boost applied (0.20 -> 0.61); Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 19:16:59 | User: system | Success: 0 | Failed last hour: 4 | Country: Local/Private | Country risk: 0.55 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 4 recent failed login(s) in last hour, Failed login, Very high login frequency, Dynamic risk boost applied (0.20 -> 0.55); Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 08:18:59 | User: root | Success: 0 | Failed last hour: 3 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: 3 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 10:47:02 | User: root | Success: 0 | Failed last hour: 3 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: 3 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 17:54:44 | User: root | Success: 0 | Failed last hour: 1 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: 1 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 19:38:55 | User: root | Success: 0 | Failed last hour: 1 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), 1 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.00
+
+  [ALERT] 2026-05-05 05:12:33 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+         Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.00
+
+File: normal_syslog_1000.log — parsed rows: 1000 — anomalies: 0
+  No anomalies detected in this file.
+
+File: ssh.log — parsed rows: 6 — anomalies: 2
+  [ALERT] 2026-05-05 10:12:44 | User: admin | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: High country risk (external IP), Failed login; Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 10:12:49 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: High country risk (external IP), Failed login; Anomaly score = -0.01
+
+File: syslog.log — parsed rows: 11 — anomalies: 0
+  No anomalies detected in this file.
+
+File: web.log — parsed rows: 6 — anomalies: 2
+  [ALERT] 2026-05-05 10:15:01 | User: /wp-login.php | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: High country risk (external IP), Failed login; Anomaly score = -0.01
+
+  [ALERT] 2026-05-05 10:15:03 | User: /xmlrpc.php | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 0
+         Reason: High country risk (external IP), Failed login; Anomaly score = -0.01
+
+
+ALERTS (top 3 most anomalous events):
+
+[ALERT] 2026-05-05 23:18:15 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+        Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.04
+
+[ALERT] 2026-05-05 22:17:56 | User: root | Success: 0 | Failed last hour: 0 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+        Reason: Unusual hour (outside typical 8-18), High country risk (external IP), Failed login; Anomaly score = -0.03
+
+[ALERT] 2026-05-05 23:34:42 | User: root | Success: 0 | Failed last hour: 1 | Country: Germany (Tor-like exit range) | Country risk: 0.99 | Unusual hour: 1
+        Reason: Unusual hour (outside typical 8-18), 1 recent failed login(s) in last hour, High country risk (external IP), Failed login; Anomaly score = -0.02
+
+
+Model summary:
+Total events analyzed: 3023
+Total anomalies flagged: 30
+
+Done. Anomaly detection completed using your input logs.

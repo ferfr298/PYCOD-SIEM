@@ -1,0 +1,44 @@
+{
+  "syslog": {
+    "source_path": "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\SIEM-Project\\siem_support_polished\\sample_source_logs\\syslog.log",
+    "dest_path": "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\SIEM-Project\\SIEM_ML-main\\logs\\syslog.log",
+    "offset": 749,
+    "identity": "(4187965320274900945, 12103423998638291)",
+    "last_run": "2026-06-02T05:57:34.016101+00:00"
+  },
+  "ssh": {
+    "source_path": "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\SIEM-Project\\siem_support_polished\\sample_source_logs\\ssh.log",
+    "dest_path": "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\SIEM-Project\\SIEM_ML-main\\logs\\ssh.log",
+    "offset": 561,
+    "identity": "(4187965320274900945, 6192449487714673)",
+    "last_run": "2026-06-02T05:57:34.017621+00:00"
+  },
+  "web": {
+    "source_path": "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\SIEM-Project\\siem_support_polished\\sample_source_logs\\web.log",
+    "dest_path": "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\SIEM-Project\\SIEM_ML-main\\logs\\web.log",
+    "offset": 567,
+    "identity": "(4187965320274900945, 12103423998638466)",
+    "last_run": "2026-06-02T05:57:34.019192+00:00"
+  },
+  "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\Project\\siem_support_final\\sample_source_logs\\ssh.log": {
+    "source_path": "..\\siem_support_final\\sample_source_logs\\ssh.log",
+    "dest_path": "..\\SIEM_ML-main\\logs\\ssh.log",
+    "offset": 561,
+    "identity": "(4187965320274900945, 2814749767638377)",
+    "last_run": "2026-06-02T08:12:01.482161+00:00"
+  },
+  "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\Project\\siem_support_final\\sample_source_logs\\syslog.log": {
+    "source_path": "..\\siem_support_final\\sample_source_logs\\syslog.log",
+    "dest_path": "..\\SIEM_ML-main\\logs\\syslog.log",
+    "offset": 749,
+    "identity": "(4187965320274900945, 3377699721059690)",
+    "last_run": "2026-06-02T08:12:01.484587+00:00"
+  },
+  "C:\\Users\\User\\OneDrive - 365education\\BTSCYB\\S2\\PYCOD\\PYCOD Project\\Project\\siem_support_final\\sample_source_logs\\web.log": {
+    "source_path": "..\\siem_support_final\\sample_source_logs\\web.log",
+    "dest_path": "..\\SIEM_ML-main\\logs\\web.log",
+    "offset": 567,
+    "identity": "(4187965320274900945, 2814749767638379)",
+    "last_run": "2026-06-02T08:12:01.487292+00:00"
+  }
+}
