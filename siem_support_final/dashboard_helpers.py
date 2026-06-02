@@ -83,3 +83,25 @@ def build_grouped(df: pd.DataFrame, group_col: str, kpis: dict):
     grouped = df.groupby(group_col).agg(**agg).reset_index()
     grouped = grouped.sort_values("total_events", ascending=False)
     return grouped
+
+
+def get_event_counts(df: pd.DataFrame, col: str, top_n: int = 10) -> pd.DataFrame:
+    """
+    Return a DataFrame of nonneg event counts for col (value_counts, top_n).
+    Always uses row counts — never anomaly scores or signed values.
+    Returns empty DataFrame if col not in df.
+    """
+    if col not in df.columns:
+        return pd.DataFrame(columns=[col, "event_count"])
+    counts = (
+        df[col]
+        .dropna()
+        .astype(str)
+        .value_counts()
+        .head(top_n)
+        .reset_index()
+    )
+    counts.columns = [col, "event_count"]
+    # Guarantee nonneg (should always be the case for value_counts, but be explicit)
+    counts["event_count"] = counts["event_count"].clip(lower=0)
+    return counts

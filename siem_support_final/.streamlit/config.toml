@@ -1,0 +1,8 @@
+[browser]
+# Disable sending anonymous usage statistics to Streamlit.
+gatherUsageStats = false
+
+[client]
+# Minimise the top-right toolbar (removes print, record-screen, auto-run,
+# change-colors, etc.).  "minimal" keeps only the essential app-menu items.
+toolbarMode = "minimal"
