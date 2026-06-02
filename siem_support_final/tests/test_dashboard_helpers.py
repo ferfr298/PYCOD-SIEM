@@ -19,6 +19,7 @@ from dashboard_helpers import (  # noqa: E402
     build_grouped,
     list_reports,
     resolve_path,
+    get_event_counts,
 )
 
 
@@ -161,3 +162,44 @@ def test_resolve_path_relative():
     base = Path("/some/project")
     result = resolve_path(base, "reports")
     assert result == Path("/some/project/reports")
+
+
+# ---------------------------------------------------------------------------
+# get_event_counts  (new QoL helper — always nonneg event counts)
+# ---------------------------------------------------------------------------
+
+def test_get_event_counts_basic():
+    df = _sample_df()
+    counts = get_event_counts(df, "country", top_n=10)
+    assert set(counts.columns) == {"country", "event_count"}
+    # All counts must be nonneg integers
+    assert (counts["event_count"] >= 0).all()
+    # 4 unique countries
+    assert len(counts) == 4
+
+
+def test_get_event_counts_top_n():
+    df = pd.DataFrame({"country": ["US"] * 5 + ["CN"] * 3 + ["DE"] * 1})
+    counts = get_event_counts(df, "country", top_n=2)
+    assert len(counts) == 2
+    assert counts.iloc[0]["country"] == "US"
+    assert counts.iloc[0]["event_count"] == 5
+
+
+def test_get_event_counts_missing_col():
+    df = _sample_df()
+    counts = get_event_counts(df, "nonexistent_col")
+    assert counts.empty
+    assert list(counts.columns) == ["nonexistent_col", "event_count"]
+
+
+def test_get_event_counts_nonneg_invariant():
+    """event_count must always be nonneg, even if df has negative numeric values elsewhere."""
+    df = pd.DataFrame({
+        "country":       ["US", "CN", "US", "RU"],
+        "anomaly_score": [-0.5, -0.3, -0.8, 0.1],  # negative scores — must not bleed into count
+    })
+    counts = get_event_counts(df, "country", top_n=10)
+    assert (counts["event_count"] >= 0).all()
+    us_count = counts.loc[counts["country"] == "US", "event_count"].iloc[0]
+    assert us_count == 2

@@ -118,11 +118,14 @@ pytest tests/
 ## Dashboard features
 
 - **KPI cards**: Total events, Suspicious, Anomalies (IF), Rule Alerts, Worst Anomaly Score.
-- **Charts**: Safety breakdown (donut via Altair), Top IPs, Top Countries, Top Users, Events by Source File.
+- **Charts**: Safety breakdown (donut), Top IPs, Top Countries, Top Users, Events by Source File, Anomaly Score Distribution.
+- **Bar chart label angle**: Sidebar control (Horizontal / 45° / Vertical) applied to all category bar charts via Altair.
+- **"Run fetcher + ML from folder"**: Enter any folder path in the sidebar and click **▶ Run fetcher + ML from folder** to ingest logs from that folder without editing `sources.ini`. A temporary config is created for the run; your original config is unchanged. Stdout/stderr are shown in expandable areas.
 - **Tabs**: Suspicious Events, Rule Alerts, Anomalies (sorted by score), Grouped Incidents, Full Report.
 - **Grouped Incidents**: Summarise by `source_ip`, `user`, or `country` with totals and worst scores.
 - **Filters**: Multiselect on `source_file`, `user`, `safety`, `country`, `source_ip`.
 - All missing columns are handled gracefully.
+- Category charts (country, IP, user, source_file) always show **event counts** (nonneg integers) — anomaly scores are shown separately in a clearly-labelled histogram.
 
 ---
 
