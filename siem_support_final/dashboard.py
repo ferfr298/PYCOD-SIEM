@@ -172,90 +172,87 @@ def _run_pipeline(fetcher_script: Path, runner_script: Path, tmp_cfg_path: str, 
         return True
 
 # ---------------------------------------------------------------------------
-# Sidebar — optional CSV upload
+# Sidebar — unified upload (.csv or .log)
 # ---------------------------------------------------------------------------
-uploaded_report = st.sidebar.file_uploader(
-    "Upload report CSV",
-    type=["csv"],
+if "uploaded_report_name" not in st.session_state:
+    st.session_state.uploaded_report_name = None
+if "uploaded_report_df" not in st.session_state:
+    st.session_state.uploaded_report_df = None
+
+uploaded_input = st.sidebar.file_uploader(
+    "Upload .csv or .log",
+    type=["csv", "log"],
     help=(
-        "Upload a siem_report_*.csv file to analyze it directly. "
-        "If provided, the upload overrides the saved report selector."
+        "Upload a report .csv to view it directly, or a raw .log to ingest and create a new report."
     ),
 )
 
-uploaded_report_name = None
-uploaded_report_df = None
-if uploaded_report is not None:
-    try:
-        # Validate before parsing so malformed uploads fail early with clear errors.
-        uploaded_report_bytes = uploaded_report.getvalue()
-        uploaded_report_name = validate_upload(
-            uploaded_report.name or "uploaded_report.csv",
-            uploaded_report_bytes,
-            ".csv",
-        )
-        uploaded_report_df = read_csv_source(uploaded_report_bytes)
-        st.sidebar.success(f"Loaded upload: {uploaded_report_name}")
-    except Exception as exc:
-        st.sidebar.error(f"Could not read uploaded CSV: {exc}")
-        st.stop()
+if uploaded_input is not None:
+    st.sidebar.info(f"Ready: {uploaded_input.name or 'uploaded_file'}")
 
-# ---------------------------------------------------------------------------
-# Sidebar — optional log upload
-# ---------------------------------------------------------------------------
-uploaded_log = st.sidebar.file_uploader(
-    "Upload log file (.log)",
-    type=["log"],
-    help=(
-        "Upload a raw .log file. It will be staged into the ML pipeline, "
-        "ingested by fetcher.py, and used to generate a fresh report CSV."
-    ),
-)
+process_upload_clicked = st.sidebar.button("▶ Process uploaded file")
+if process_upload_clicked:
+    if uploaded_input is None:
+        st.sidebar.error("Please choose a .csv or .log file first.")
+    else:
+        upload_name = uploaded_input.name or "uploaded_file"
+        upload_bytes = uploaded_input.getvalue()
+        upload_ext = Path(upload_name).suffix.lower()
 
-log_upload_requested = False
-if uploaded_log is not None:
-    st.sidebar.info(f"Ready to ingest: {uploaded_log.name or 'uploaded.log'}")
-    log_upload_requested = st.sidebar.button("▶ Ingest uploaded log and create report")
-    if log_upload_requested:
-        try:
-            support_dir = Path(__file__).parent
-            fetcher_script = support_dir / "fetcher.py"
-            runner_script = support_dir / "runner.py"
-
-            uploaded_log_bytes = uploaded_log.getvalue()
-            uploaded_name = validate_upload(
-                uploaded_log.name or "uploaded.log",
-                uploaded_log_bytes,
-                ".log",
-            )
-            # Store upload in a temp folder so fetcher can consume it as a normal file path.
-            tmp_log_dir = Path(tempfile.mkdtemp(prefix="siem_upload_"))
-            tmp_log_path = tmp_log_dir / uploaded_name
-            tmp_log_path.write_bytes(uploaded_log_bytes)
-
-            tmp_cfg_path = _write_temp_config(
-                config_path_input,
-                source_files=[str(tmp_log_path.resolve())],
-            )
-
+        if upload_ext == ".csv":
             try:
-                if _run_pipeline(fetcher_script, runner_script, tmp_cfg_path, "Ingesting uploaded log…"):
-                    # Clear cached CSV reads so the newest report appears immediately.
-                    st.cache_data.clear()
-                    st.sidebar.success("Uploaded log ingested and report created.")
-                    st.rerun()
-            finally:
-                # Best-effort cleanup for temporary config and uploaded source file.
+                # Validate before parsing so malformed uploads fail early with clear errors.
+                uploaded_report_name = validate_upload(upload_name, upload_bytes, ".csv")
+                st.session_state.uploaded_report_name = uploaded_report_name
+                st.session_state.uploaded_report_df = read_csv_source(upload_bytes)
+                st.sidebar.success(f"Loaded upload: {uploaded_report_name}")
+            except Exception as exc:
+                st.sidebar.error(f"Could not read uploaded CSV: {exc}")
+                st.stop()
+        elif upload_ext == ".log":
+            try:
+                support_dir = Path(__file__).parent
+                fetcher_script = support_dir / "fetcher.py"
+                runner_script = support_dir / "runner.py"
+
+                uploaded_name = validate_upload(upload_name, upload_bytes, ".log")
+                # A new ingested report should replace any previously uploaded CSV override.
+                st.session_state.uploaded_report_name = None
+                st.session_state.uploaded_report_df = None
+
+                # Store upload in a temp folder so fetcher can consume it as a normal file path.
+                tmp_log_dir = Path(tempfile.mkdtemp(prefix="siem_upload_"))
+                tmp_log_path = tmp_log_dir / uploaded_name
+                tmp_log_path.write_bytes(upload_bytes)
+
+                tmp_cfg_path = _write_temp_config(
+                    config_path_input,
+                    source_files=[str(tmp_log_path.resolve())],
+                )
+
                 try:
-                    os.unlink(tmp_cfg_path)
-                except Exception:
-                    pass
-                try:
-                    shutil.rmtree(tmp_log_dir)
-                except Exception:
-                    pass
-        except Exception as exc:
-            st.sidebar.error(f"Log upload pipeline error: {exc}")
+                    if _run_pipeline(fetcher_script, runner_script, tmp_cfg_path, "Ingesting uploaded log…"):
+                        # Clear cached CSV reads so the newest report appears immediately.
+                        st.cache_data.clear()
+                        st.sidebar.success("Uploaded log ingested and report created.")
+                        st.rerun()
+                finally:
+                    # Best-effort cleanup for temporary config and uploaded source file.
+                    try:
+                        os.unlink(tmp_cfg_path)
+                    except Exception:
+                        pass
+                    try:
+                        shutil.rmtree(tmp_log_dir)
+                    except Exception:
+                        pass
+            except Exception as exc:
+                st.sidebar.error(f"Log upload pipeline error: {exc}")
+        else:
+            st.sidebar.error("Unsupported file type. Please upload a .csv or .log file.")
+
+uploaded_report_name = st.session_state.uploaded_report_name
+uploaded_report_df = st.session_state.uploaded_report_df
 
 # ---------------------------------------------------------------------------
 # Sidebar — Run fetcher + ML from folder
