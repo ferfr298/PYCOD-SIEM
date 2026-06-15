@@ -41,6 +41,7 @@ from dashboard_helpers import (
     safe_col,
     compute_kpis,
     build_grouped,
+    read_csv_source,
 )
 
 # ---------------------------------------------------------------------------
@@ -85,6 +86,29 @@ except (configparser.NoSectionError, configparser.NoOptionError) as exc:
 st.sidebar.markdown(f"**ML project:** `{project_dir}`")
 st.sidebar.markdown(f"**Reports dir:** `{reports_dir}`")
 st.sidebar.markdown("---")
+
+# ---------------------------------------------------------------------------
+# Sidebar — optional CSV upload
+# ---------------------------------------------------------------------------
+uploaded_report = st.sidebar.file_uploader(
+    "Upload report CSV",
+    type=["csv"],
+    help=(
+        "Upload a siem_report_*.csv file to analyze it directly. "
+        "If provided, the upload overrides the saved report selector."
+    ),
+)
+
+uploaded_report_name = None
+uploaded_report_df = None
+if uploaded_report is not None:
+    try:
+        uploaded_report_name = uploaded_report.name or "uploaded_report.csv"
+        uploaded_report_df = read_csv_source(uploaded_report.getvalue())
+        st.sidebar.success(f"Loaded upload: {uploaded_report_name}")
+    except Exception as exc:
+        st.sidebar.error(f"Could not read uploaded CSV: {exc}")
+        st.stop()
 
 # ---------------------------------------------------------------------------
 # Sidebar — Run fetcher + ML from folder
@@ -220,20 +244,6 @@ st.sidebar.markdown("---")
 # ---------------------------------------------------------------------------
 # Report selector
 # ---------------------------------------------------------------------------
-reports = list_reports(reports_dir)
-
-if not reports:
-    st.warning(
-        f"No `siem_report_*.csv` files found in `{reports_dir}`.\n\n"
-        "Run the fetcher and ML pipeline first:\n"
-        "```\npython runner.py --config config/sources.ini\n```"
-    )
-    st.stop()
-
-report_names = [r.name for r in reports]
-selected_name = st.sidebar.selectbox("Select report", report_names, index=0)
-selected_path = reports_dir / selected_name
-
 if st.sidebar.button("\U0001f504 Refresh"):
     st.cache_data.clear()
 
@@ -242,13 +252,33 @@ if st.sidebar.button("\U0001f504 Refresh"):
 # ---------------------------------------------------------------------------
 @st.cache_data(ttl=30)
 def _read_csv(path: str) -> pd.DataFrame:
-    return pd.read_csv(path, low_memory=False)
+    return read_csv_source(path)
 
-try:
-    df = _read_csv(str(selected_path))
-except Exception as exc:
-    st.error(f"Could not read report: {exc}")
-    st.stop()
+
+if uploaded_report_df is not None:
+    df = uploaded_report_df
+    selected_name = uploaded_report_name or "uploaded_report.csv"
+    selected_path = None
+else:
+    reports = list_reports(reports_dir)
+
+    if not reports:
+        st.warning(
+            f"No `siem_report_*.csv` files found in `{reports_dir}`.\n\n"
+            "Run the fetcher and ML pipeline first, or upload a CSV report in the sidebar:\n"
+            "```\npython runner.py --config config/sources.ini\n```"
+        )
+        st.stop()
+
+    report_names = [r.name for r in reports]
+    selected_name = st.sidebar.selectbox("Select report", report_names, index=0)
+    selected_path = reports_dir / selected_name
+
+    try:
+        df = _read_csv(str(selected_path))
+    except Exception as exc:
+        st.error(f"Could not read report: {exc}")
+        st.stop()
 
 kpis = compute_kpis(df)
 
@@ -256,7 +286,10 @@ kpis = compute_kpis(df)
 # Header
 # ---------------------------------------------------------------------------
 st.title("\U0001f512 SIEM ML Dashboard")
-st.caption(f"Report: `{selected_path.name}`  •  {len(df):,} rows  •  `{selected_path}`")
+if selected_path is None:
+    st.caption(f"Report: `{selected_name}`  •  {len(df):,} rows  •  uploaded CSV")
+else:
+    st.caption(f"Report: `{selected_path.name}`  •  {len(df):,} rows  •  `{selected_path}`")
 
 # ---------------------------------------------------------------------------
 # KPI cards
