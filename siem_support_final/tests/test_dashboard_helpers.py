@@ -20,6 +20,7 @@ from dashboard_helpers import (  # noqa: E402
     list_reports,
     resolve_path,
     get_event_counts,
+    read_csv_source,
 )
 
 
@@ -203,3 +204,24 @@ def test_get_event_counts_nonneg_invariant():
     assert (counts["event_count"] >= 0).all()
     us_count = counts.loc[counts["country"] == "US", "event_count"].iloc[0]
     assert us_count == 2
+
+
+# ---------------------------------------------------------------------------
+# read_csv_source
+# ---------------------------------------------------------------------------
+
+def test_read_csv_source_from_path(tmp_path):
+    csv_path = tmp_path / "report.csv"
+    csv_path.write_text("a,b\n1,2\n")
+
+    df = read_csv_source(csv_path)
+
+    assert list(df.columns) == ["a", "b"]
+    assert df.iloc[0]["a"] == 1
+
+
+def test_read_csv_source_from_bytes():
+    df = read_csv_source(b"x,y\n3,4\n")
+
+    assert list(df.columns) == ["x", "y"]
+    assert df.iloc[0]["y"] == 4

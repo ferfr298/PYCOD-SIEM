@@ -4,6 +4,7 @@ No Streamlit imports — safe to import in tests without a running Streamlit con
 """
 
 import configparser
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -19,6 +20,13 @@ def load_config(config_path: str) -> configparser.ConfigParser:
     cfg = configparser.ConfigParser(inline_comment_prefixes=("#", ";"))
     cfg.read(config_path, encoding="utf-8")
     return cfg
+
+
+def read_csv_source(source) -> pd.DataFrame:
+    """Read a CSV from a path-like object or raw bytes."""
+    if isinstance(source, (bytes, bytearray)):
+        return pd.read_csv(io.BytesIO(source), low_memory=False)
+    return pd.read_csv(source, low_memory=False)
 
 
 def list_reports(reports_dir: Path) -> list:
