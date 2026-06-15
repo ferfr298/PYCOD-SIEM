@@ -517,8 +517,13 @@ def save_csv_report(df_events: pd.DataFrame, script_dir: Path) -> Path:
 
     export_df = df_events.copy()
     export_df["anomaly_label"] = export_df["anomaly"].map({-1: "anomaly", 1: "normal"}).fillna("unknown")
+    # Populate a human-readable reason for anomalous or rule-alerted rows.
+    # Previously this only filled for model anomalies (anomaly == -1).
+    # Include `rule_alert` so deterministic alerts also get an explanation.
     export_df["anomaly_reason"] = export_df.apply(
-        lambda r: explain_anomaly(r) if int(r["anomaly"]) == -1 else "",
+        lambda r: explain_anomaly(r)
+        if (int(r.get("anomaly", 1)) == -1 or int(r.get("rule_alert", 0)) == 1)
+        else "",
         axis=1,
     )
     export_df["anomaly_score"] = export_df["anomaly_score"].round(2)

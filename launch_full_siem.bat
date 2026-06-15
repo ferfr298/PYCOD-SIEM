@@ -36,6 +36,28 @@ if not exist "siem_support_final\.venv\Scripts\activate.bat" (
     )
 )
 
+REM Ensure the SIEM_ML-main project also has a venv and required ML deps
+if not exist "SIEM_ML-main\.venv\Scripts\activate.bat" (
+    echo [INFO] No SIEM_ML-main virtual environment found.
+    echo [INFO] Creating venv in SIEM_ML-main\.venv ...
+    python -m venv "SIEM_ML-main\.venv"
+    if errorlevel 1 (
+        echo [ERROR] Failed to create SIEM_ML-main venv.
+        pause
+        exit /b 1
+    )
+
+    if exist "SIEM_ML-main\requirements.txt" (
+        echo [INFO] Installing SIEM ML dependencies into SIEM_ML-main\.venv ...
+        call "SIEM_ML-main\.venv\Scripts\pip.exe" install -r "SIEM_ML-main\requirements.txt"
+        if errorlevel 1 (
+            echo [WARN] Installing SIEM ML requirements failed; continuing.
+        )
+    ) else (
+        echo [WARN] SIEM_ML-main\requirements.txt not found — skipping ML deps.
+    )
+)
+
 echo.
 echo [INFO] Starting full SIEM pipeline and dashboard ...
 echo.
