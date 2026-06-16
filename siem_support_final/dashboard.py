@@ -15,6 +15,8 @@ QoL additions (v2):
   - "Run fetcher + ML from folder" sidebar control with text-input for source
     folder. Creates a temporary config, runs fetcher.py then runner.py
     --skip-fetch, and refreshes the report list.
+    - CSV upload support for offline report inspection and .log upload support
+        that ingests a raw log through fetcher.py and then creates a fresh report.
   - Bar chart label-angle selector (Horizontal / 45° / Vertical) applied via
     Altair for charts with long category labels.
   - Category charts (country / user / IP / source_file) use event counts
@@ -42,6 +44,7 @@ from dashboard_helpers import (
     compute_kpis,
     build_grouped,
     read_csv_source,
+    validate_upload,
 )
 
 # ---------------------------------------------------------------------------
@@ -87,28 +90,169 @@ st.sidebar.markdown(f"**ML project:** `{project_dir}`")
 st.sidebar.markdown(f"**Reports dir:** `{reports_dir}`")
 st.sidebar.markdown("---")
 
+
+def _write_temp_config(base_config_path: str, *, source_dirs: str | None = None, source_files: list[str] | None = None) -> str:
+    # Create a throwaway config so one-off runs do not modify the real sources.ini.
+    tmp_cfg = configparser.ConfigParser(inline_comment_prefixes=("#", ";"))
+    tmp_cfg.read(base_config_path, encoding="utf-8")
+
+    if source_dirs is not None:
+        if not tmp_cfg.has_section("source_dirs"):
+            tmp_cfg.add_section("source_dirs")
+        if tmp_cfg.has_section("source_files"):
+            tmp_cfg.remove_section("source_files")
+        tmp_cfg.set("source_dirs", "paths", source_dirs)
+
+    if source_files is not None:
+        if tmp_cfg.has_section("source_dirs"):
+            tmp_cfg.remove_section("source_dirs")
+        if not tmp_cfg.has_section("source_files"):
+            tmp_cfg.add_section("source_files")
+        tmp_cfg.set("source_files", "files", ", ".join(source_files))
+
+    tmp_cfg_fd, tmp_cfg_path = tempfile.mkstemp(prefix="siem_tmp_cfg_", suffix=".ini")
+    os.close(tmp_cfg_fd)
+    with open(tmp_cfg_path, "w", encoding="utf-8") as fh:
+        tmp_cfg.write(fh)
+    return tmp_cfg_path
+
+
+def _run_pipeline(fetcher_script: Path, runner_script: Path, tmp_cfg_path: str, status_label: str) -> bool:
+    # Shared wrapper for "folder run" and "uploaded log run" workflows.
+    python_exe = sys.executable
+    status_box = st.sidebar.status(status_label, expanded=True)
+
+    with status_box:
+        st.write("**Step 1/2 — Fetcher**")
+        fetch_cmd = [python_exe, str(fetcher_script), "--config", tmp_cfg_path]
+        fetch_result = subprocess.run(
+            fetch_cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(fetcher_script.parent),
+        )
+        if fetch_result.stdout:
+            with st.expander("Fetcher output", expanded=False):
+                st.code(fetch_result.stdout, language="text")
+        if fetch_result.stderr:
+            with st.expander("Fetcher stderr", expanded=False):
+                st.code(fetch_result.stderr, language="text")
+        if fetch_result.returncode != 0:
+            st.warning(
+                f"Fetcher exited with code {fetch_result.returncode} — continuing to ML step."
+            )
+
+        st.write("**Step 2/2 — ML runner**")
+        runner_cmd = [
+            python_exe,
+            str(runner_script),
+            "--config",
+            tmp_cfg_path,
+            "--skip-fetch",
+        ]
+        runner_result = subprocess.run(
+            runner_cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(runner_script.parent),
+        )
+        if runner_result.stdout:
+            with st.expander("Runner output", expanded=False):
+                st.code(runner_result.stdout, language="text")
+        if runner_result.stderr:
+            with st.expander("Runner stderr", expanded=False):
+                st.code(runner_result.stderr, language="text")
+
+        if runner_result.returncode != 0:
+            status_box.update(label="Pipeline failed — check output above.", state="error")
+            return False
+
+        # True means a fresh report should now exist in reports_dir.
+        status_box.update(label="Pipeline complete!", state="complete")
+        return True
+
 # ---------------------------------------------------------------------------
-# Sidebar — optional CSV upload
+# Sidebar — unified upload (.csv or .log)
 # ---------------------------------------------------------------------------
-uploaded_report = st.sidebar.file_uploader(
-    "Upload report CSV",
-    type=["csv"],
+if "uploaded_report_name" not in st.session_state:
+    st.session_state.uploaded_report_name = None
+if "uploaded_report_df" not in st.session_state:
+    st.session_state.uploaded_report_df = None
+
+uploaded_input = st.sidebar.file_uploader(
+    "Upload .csv or .log",
+    type=["csv", "log"],
     help=(
-        "Upload a siem_report_*.csv file to analyze it directly. "
-        "If provided, the upload overrides the saved report selector."
+        "Upload a report .csv to view it directly, or a raw .log to ingest and create a new report."
     ),
 )
 
-uploaded_report_name = None
-uploaded_report_df = None
-if uploaded_report is not None:
-    try:
-        uploaded_report_name = uploaded_report.name or "uploaded_report.csv"
-        uploaded_report_df = read_csv_source(uploaded_report.getvalue())
-        st.sidebar.success(f"Loaded upload: {uploaded_report_name}")
-    except Exception as exc:
-        st.sidebar.error(f"Could not read uploaded CSV: {exc}")
-        st.stop()
+if uploaded_input is not None:
+    st.sidebar.info(f"Ready: {uploaded_input.name or 'uploaded_file'}")
+
+process_upload_clicked = st.sidebar.button("▶ Process uploaded file")
+if process_upload_clicked:
+    if uploaded_input is None:
+        st.sidebar.error("Please choose a .csv or .log file first.")
+    else:
+        upload_name = uploaded_input.name or "uploaded_file"
+        upload_bytes = uploaded_input.getvalue()
+        upload_ext = Path(upload_name).suffix.lower()
+
+        if upload_ext == ".csv":
+            try:
+                # Validate before parsing so malformed uploads fail early with clear errors.
+                uploaded_report_name = validate_upload(upload_name, upload_bytes, ".csv")
+                st.session_state.uploaded_report_name = uploaded_report_name
+                st.session_state.uploaded_report_df = read_csv_source(upload_bytes)
+                st.sidebar.success(f"Loaded upload: {uploaded_report_name}")
+            except Exception as exc:
+                st.sidebar.error(f"Could not read uploaded CSV: {exc}")
+                st.stop()
+        elif upload_ext == ".log":
+            try:
+                support_dir = Path(__file__).parent
+                fetcher_script = support_dir / "fetcher.py"
+                runner_script = support_dir / "runner.py"
+
+                uploaded_name = validate_upload(upload_name, upload_bytes, ".log")
+                # A new ingested report should replace any previously uploaded CSV override.
+                st.session_state.uploaded_report_name = None
+                st.session_state.uploaded_report_df = None
+
+                # Store upload in a temp folder so fetcher can consume it as a normal file path.
+                tmp_log_dir = Path(tempfile.mkdtemp(prefix="siem_upload_"))
+                tmp_log_path = tmp_log_dir / uploaded_name
+                tmp_log_path.write_bytes(upload_bytes)
+
+                tmp_cfg_path = _write_temp_config(
+                    config_path_input,
+                    source_files=[str(tmp_log_path.resolve())],
+                )
+
+                try:
+                    if _run_pipeline(fetcher_script, runner_script, tmp_cfg_path, "Ingesting uploaded log…"):
+                        # Clear cached CSV reads so the newest report appears immediately.
+                        st.cache_data.clear()
+                        st.sidebar.success("Uploaded log ingested and report created.")
+                        st.rerun()
+                finally:
+                    # Best-effort cleanup for temporary config and uploaded source file.
+                    try:
+                        os.unlink(tmp_cfg_path)
+                    except Exception:
+                        pass
+                    try:
+                        shutil.rmtree(tmp_log_dir)
+                    except Exception:
+                        pass
+            except Exception as exc:
+                st.sidebar.error(f"Log upload pipeline error: {exc}")
+        else:
+            st.sidebar.error("Unsupported file type. Please upload a .csv or .log file.")
+
+uploaded_report_name = st.session_state.uploaded_report_name
+uploaded_report_df = st.session_state.uploaded_report_df
 
 # ---------------------------------------------------------------------------
 # Sidebar — Run fetcher + ML from folder
@@ -138,84 +282,16 @@ if run_clicked:
     elif not Path(source_folder).is_dir():
         st.sidebar.error(f"Path is not a directory: `{source_folder}`")
     else:
-        # Build a temporary config file identical to the real one but with
-        # [source_dirs] paths overridden to the user-supplied folder.
         try:
-            tmp_cfg = configparser.ConfigParser(inline_comment_prefixes=("#", ";"))
-            tmp_cfg.read(config_path_input, encoding="utf-8")
-
-            if not tmp_cfg.has_section("source_dirs"):
-                tmp_cfg.add_section("source_dirs")
-            # Remove source_files so only source_dirs is active
-            if tmp_cfg.has_section("source_files"):
-                tmp_cfg.remove_section("source_files")
-            tmp_cfg.set("source_dirs", "paths", source_folder)
-
-            # Write to a temp file in the system temp directory
-            tmp_cfg_fd, tmp_cfg_path = tempfile.mkstemp(
-                prefix="siem_tmp_cfg_", suffix=".ini"
-            )
-            os.close(tmp_cfg_fd)
-            with open(tmp_cfg_path, "w", encoding="utf-8") as fh:
-                tmp_cfg.write(fh)
-
             support_dir = Path(__file__).parent
             fetcher_script = support_dir / "fetcher.py"
             runner_script  = support_dir / "runner.py"
-            python_exe = sys.executable
+            tmp_cfg_path = _write_temp_config(config_path_input, source_dirs=source_folder)
 
-            status_box = st.sidebar.status("Running pipeline…", expanded=True)
-
-            with status_box:
-                # Step 1: fetcher
-                st.write("**Step 1/2 — Fetcher**")
-                fetch_cmd = [
-                    python_exe, str(fetcher_script),
-                    "--config", tmp_cfg_path,
-                ]
-                fetch_result = subprocess.run(
-                    fetch_cmd,
-                    capture_output=True,
-                    text=True,
-                    cwd=str(support_dir),
-                )
-                if fetch_result.stdout:
-                    with st.expander("Fetcher output", expanded=False):
-                        st.code(fetch_result.stdout, language="text")
-                if fetch_result.stderr:
-                    with st.expander("Fetcher stderr", expanded=False):
-                        st.code(fetch_result.stderr, language="text")
-                if fetch_result.returncode != 0:
-                    st.warning(
-                        f"Fetcher exited with code {fetch_result.returncode} — "
-                        "continuing to ML step."
-                    )
-
-                # Step 2: runner --skip-fetch
-                st.write("**Step 2/2 — ML runner**")
-                runner_cmd = [
-                    python_exe, str(runner_script),
-                    "--config", tmp_cfg_path,
-                    "--skip-fetch",
-                ]
-                runner_result = subprocess.run(
-                    runner_cmd,
-                    capture_output=True,
-                    text=True,
-                    cwd=str(support_dir),
-                )
-                if runner_result.stdout:
-                    with st.expander("Runner output", expanded=False):
-                        st.code(runner_result.stdout, language="text")
-                if runner_result.stderr:
-                    with st.expander("Runner stderr", expanded=False):
-                        st.code(runner_result.stderr, language="text")
-
-                if runner_result.returncode != 0:
-                    status_box.update(label="Pipeline failed — check output above.", state="error")
-                else:
-                    status_box.update(label="Pipeline complete!", state="complete")
-                    st.cache_data.clear()
+            if _run_pipeline(fetcher_script, runner_script, tmp_cfg_path, "Running pipeline…"):
+                # Refresh to pick up any newly generated report files.
+                st.cache_data.clear()
+                st.rerun()
 
         except Exception as exc:
             st.sidebar.error(f"Pipeline error: {exc}")
@@ -252,6 +328,7 @@ if st.sidebar.button("\U0001f504 Refresh"):
 # ---------------------------------------------------------------------------
 @st.cache_data(ttl=30)
 def _read_csv(path: str) -> pd.DataFrame:
+    # Cached read speeds up report switching and repeated interactions.
     return read_csv_source(path)
 
 
@@ -295,6 +372,7 @@ else:
 # KPI cards
 # ---------------------------------------------------------------------------
 def _fmt(val) -> str:
+    # Render KPI values consistently across ints/floats/missing values.
     if val is None:
         return "N/A"
     if isinstance(val, float):
@@ -324,6 +402,7 @@ with st.expander("Filters", expanded=False):
     filtered_df = df.copy()
     for col, vals in filter_cols.items():
         if vals:
+            # Convert to string so mixed types still filter reliably.
             filtered_df = filtered_df[filtered_df[col].astype(str).isin(vals)]
 
     st.caption(f"{len(filtered_df):,} rows after filters")
@@ -382,6 +461,7 @@ def _count_chart(
     """
     if cat_col not in df_in.columns:
         return None
+    # Convert categories to str to avoid chart issues with mixed/object types.
     counts = (
         df_in[cat_col]
         .dropna()
@@ -553,6 +633,7 @@ with tab3:
     if kpis["anomaly_col"]:
         anom_df = view_df[view_df[kpis["anomaly_col"]] == -1].copy()
         if kpis["score_col"]:
+            # Lower anomaly_score means more anomalous, so sort ascending.
             anom_df = anom_df.sort_values(kpis["score_col"], ascending=True)
         st.caption(
             f"{len(anom_df):,} anomalous events  "
@@ -584,6 +665,7 @@ with tab5:
     search_term = st.text_input("Search (case-insensitive, any column)", "")
     display_df = view_df
     if search_term:
+        # Row is kept if any column contains the search fragment.
         mask = display_df.apply(
             lambda col: col.astype(str).str.contains(search_term, case=False, na=False)
         ).any(axis=1)

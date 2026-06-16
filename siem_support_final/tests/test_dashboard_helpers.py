@@ -21,6 +21,8 @@ from dashboard_helpers import (  # noqa: E402
     resolve_path,
     get_event_counts,
     read_csv_source,
+    validate_upload,
+    MAX_UPLOAD_BYTES,
 )
 
 
@@ -225,3 +227,28 @@ def test_read_csv_source_from_bytes():
 
     assert list(df.columns) == ["x", "y"]
     assert df.iloc[0]["y"] == 4
+
+
+# ---------------------------------------------------------------------------
+# validate_upload
+# ---------------------------------------------------------------------------
+
+def test_validate_upload_accepts_csv_and_sanitizes_name():
+    name = validate_upload("..\\evil\\report.csv", b"a,b\n1,2\n", ".csv")
+    assert name == "report.csv"
+
+
+def test_validate_upload_rejects_wrong_extension():
+    with pytest.raises(ValueError, match=r"Expected a \.csv file"):
+        validate_upload("report.log", b"a,b\n1,2\n", ".csv")
+
+
+def test_validate_upload_rejects_empty_file():
+    with pytest.raises(ValueError, match="empty"):
+        validate_upload("report.csv", b"", ".csv")
+
+
+def test_validate_upload_rejects_oversized_file():
+    payload = b"x" * (MAX_UPLOAD_BYTES + 1)
+    with pytest.raises(ValueError, match="too large"):
+        validate_upload("report.csv", payload, ".csv")

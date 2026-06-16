@@ -31,6 +31,7 @@ from pathlib import Path
 
 def _resolve(base: Path, rel_or_abs: str) -> Path:
     """Return an absolute Path; resolve relative paths against base."""
+    # Keep absolute paths unchanged; resolve relative values against project base.
     p = Path(rel_or_abs)
     return p if p.is_absolute() else base / p
 
@@ -48,6 +49,7 @@ def _safe_dest_name(source_path: Path, dest_dir: Path) -> Path:
         /var/log/app/auth.log   → dest_dir/auth.log          (no collision)
         /opt/app/auth.log       → dest_dir/auth_a3f9b1c2.log (collision)
     """
+    # Keep destination names deterministic so the same source always maps the same way.
     stem = source_path.stem
     suffix = source_path.suffix
     candidate = dest_dir / source_path.name
@@ -82,6 +84,7 @@ def _file_identity(path: Path):
     (st_dev, st_ctime_ns) — imperfect but practical.
     """
     try:
+        # Identity values let us detect rotation/truncation between runs.
         st = path.stat()
         if st.st_ino != 0:
             return (int(st.st_dev), int(st.st_ino))
@@ -91,6 +94,7 @@ def _file_identity(path: Path):
 
 
 def _load_checkpoints(checkpoint_path: Path) -> dict:
+    # Checkpoints store last-read byte offset per source file.
     if checkpoint_path.exists():
         try:
             with checkpoint_path.open("r", encoding="utf-8") as fh:
@@ -101,6 +105,7 @@ def _load_checkpoints(checkpoint_path: Path) -> dict:
 
 
 def _save_checkpoints(checkpoint_path: Path, data: dict) -> None:
+    # Write to a temp file then replace, so partial writes do not corrupt state.
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     tmp = checkpoint_path.with_suffix(".tmp")
     try:
@@ -117,6 +122,7 @@ def _scan_dirs(source_dirs: list[Path], ml_logs_resolved: Path | None) -> list[P
     Skips any path that falls inside ml_logs_resolved (loop prevention).
     Returns a sorted, deduplicated list of absolute paths.
     """
+    # seen avoids duplicate files when paths overlap.
     seen = set()
     found = []
     for d in source_dirs:
@@ -175,6 +181,7 @@ def fetch_file(
     identity = _file_identity(source_path)
     identity_key = str(identity) if identity is not None else "unknown"
 
+    # Load previous state for this file (offset + identity).
     prev = checkpoints.get(checkpoint_key, {})
     prev_offset = int(prev.get("offset", 0))
     prev_identity = prev.get("identity", None)
@@ -187,6 +194,7 @@ def fetch_file(
         print(f"    File shrank ({prev_offset} → {file_size} bytes) — likely truncated. Resetting.")
         prev_offset = 0
 
+    # No new bytes means nothing changed since last run.
     if prev_offset == file_size:
         result["skipped"] = True
         return result
@@ -201,6 +209,7 @@ def fetch_file(
         result["error"] = f"read error: {exc}"
         return result
 
+    # Invalid bytes are replaced rather than crashing the pipeline.
     text = raw.decode("utf-8", errors="replace")
     new_lines = [ln for ln in text.splitlines(keepends=True) if ln.strip()]
 
@@ -208,6 +217,7 @@ def fetch_file(
     result["bytes_read"] = new_offset - prev_offset
 
     if new_lines and not dry_run:
+        # Append only newly seen lines into the ML logs directory.
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             with dest_path.open("a", encoding="utf-8") as fh:
@@ -234,6 +244,7 @@ def fetch_file(
 
 def _parse_multiline(raw: str) -> list[str]:
     """Split a comma-separated config value into a list of non-empty strings."""
+    # Also accept multiline INI formatting by converting newlines to commas first.
     return [v.strip() for v in raw.replace("\n", ",").split(",") if v.strip()]
 
 
@@ -248,6 +259,7 @@ def _collect_sources(cfg: configparser.ConfigParser, config_dir: Path) -> list[P
     """
     sources: list[Path] = []
 
+    # Prefer directory mode when provided so new .log files are auto-discovered.
     # --- Directory-based discovery ---
     if cfg.has_section("source_dirs"):
         raw_dirs = cfg.get("source_dirs", "paths", fallback="").strip()
@@ -260,6 +272,7 @@ def _collect_sources(cfg: configparser.ConfigParser, config_dir: Path) -> list[P
             # Actually just return the dirs — the caller will scan.
             return ("dirs", dir_paths)  # type: ignore[return-value]
 
+    # Fallback mode allows strict control over exact files to ingest.
     # --- Exact file paths fallback ---
     if cfg.has_section("source_files"):
         raw_files = cfg.get("source_files", "files", fallback="").strip()
@@ -282,6 +295,7 @@ def _collect_sources(cfg: configparser.ConfigParser, config_dir: Path) -> list[P
 # ---------------------------------------------------------------------------
 
 def main(argv=None):
+    # CLI entry point for incremental ingestion into SIEM_ML-main/logs.
     parser = argparse.ArgumentParser(
         description="Incrementally fetch log sources into the SIEM ML logs/ folder."
     )
@@ -334,6 +348,7 @@ def main(argv=None):
         print("  Reset        : checkpoints will be cleared for this run")
     print()
 
+    # Resolve once so we can quickly test if a source accidentally points into ML logs.
     # ML logs dir resolved for loop-prevention checks
     try:
         ml_logs_resolved = logs_dir.resolve() if logs_dir.exists() else None
@@ -365,6 +380,7 @@ def main(argv=None):
     # --- Load checkpoints (optionally reset) --------------------------
     checkpoints = {} if args.reset else _load_checkpoints(checkpoint_file)
 
+    # Walk each discovered source and copy only its newly appended content.
     # --- Process each source file ------------------------------------
     total_lines = 0
     any_error = False

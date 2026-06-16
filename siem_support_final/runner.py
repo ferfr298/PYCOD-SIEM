@@ -31,6 +31,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 def _resolve(base: Path, rel_or_abs: str) -> Path:
+    # Normalize config paths so callers can use either absolute or relative values.
     p = Path(rel_or_abs)
     return p if p.is_absolute() else base / p
 
@@ -39,6 +40,7 @@ def _latest_report(reports_dir: Path):
     """Return the most recently modified siem_report_*.csv in reports_dir."""
     if not reports_dir.exists():
         return None
+    # Sort by file modification time to find the freshest report output.
     candidates = sorted(
         reports_dir.glob("siem_report_*.csv"),
         key=lambda p: p.stat().st_mtime,
@@ -52,6 +54,7 @@ def _latest_report(reports_dir: Path):
 # ---------------------------------------------------------------------------
 
 def main(argv=None):
+    # Parse CLI flags so this script can be used in manual runs and .bat launchers.
     parser = argparse.ArgumentParser(
         description="Orchestrate fetcher → siem_ml.py and report the latest output."
     )
@@ -90,6 +93,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     # --- Load config --------------------------------------------------
+    # Read the same config used by fetcher and dashboard for consistent paths.
     config_path = Path(args.config)
     if not config_path.exists():
         print(f"[error] Config file not found: {config_path}", file=sys.stderr)
@@ -112,6 +116,7 @@ def main(argv=None):
     print()
 
     # --- Validate ML project directory --------------------------------
+    # Fail fast if the ML project path is wrong to avoid confusing subprocess errors.
     ml_script = project_dir / "siem_ml.py"
     if not project_dir.exists():
         print(
@@ -152,6 +157,7 @@ def main(argv=None):
             print("Step 1: Fetch")
             print(f"  Command: {' '.join(fetch_cmd)}")
             if not args.dry_run:
+                # Fetcher non-zero is treated as warning; ML may still run on existing logs.
                 result = subprocess.run(fetch_cmd)
                 if result.returncode != 0:
                     print(
@@ -174,6 +180,7 @@ def main(argv=None):
     print(f"  CWD     : {project_dir}")
 
     if not args.dry_run:
+        # Run from project_dir so siem_ml.py resolves logs/reports relative to itself.
         result = subprocess.run(ml_cmd, cwd=str(project_dir))
         ml_exit = result.returncode
         if ml_exit != 0:
