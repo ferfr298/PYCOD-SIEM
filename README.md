@@ -18,9 +18,6 @@ Commit the source code, docs, configuration templates, and tests. Keep generated
 
 - virtual environments such as `.venv/`
 - Python caches such as `__pycache__/`
-- generated reports under `SIEM_ML-main/reports/`
-- the saved model and fetch checkpoints under `SIEM_ML-main/memory/`
-- local support config in `siem_support_final/config/sources.ini`
 
 ## Quick start
 
